@@ -9,10 +9,6 @@ const UP = Vector2(0,-1)
 var velocity = Vector2()
 var is_first_jump = true
 
-const DOUBLETAP_DELAY = .25
-var doubletap_time = DOUBLETAP_DELAY
-var last_keycode = 0
-
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
@@ -24,6 +20,17 @@ func _ready():
 
 func get_input():
 	velocity.x = 0
+	var animation = "idle"
+	
+	if velocity.y > 0 and not is_on_floor():
+		animation = "falling"
+		
+	if velocity.y < 0:
+		animation = "lompat"
+		
+		
+		
+	
 	if is_on_floor() and Input.is_action_just_pressed('up'):
 		velocity.y = jump_speed
 		is_first_jump = true
@@ -32,33 +39,32 @@ func get_input():
 		is_first_jump = false
 	if Input.is_action_pressed('right'):
 		velocity.x += speed
-		$Sprite.flip_h = false
+		$AnimatedSprite.flip_h = false
+		if is_on_floor():
+			animation = "jalan_kanan"
 	if Input.is_action_pressed('left'):
 		velocity.x -= speed
-		$Sprite.flip_h = true
+		$AnimatedSprite.flip_h = true
+		if is_on_floor():
+			
+			animation = "jalan_kanan"
 		
-	if Input.is_action_pressed('down'):
+	if Input.is_action_pressed('down') and is_on_floor():
 		velocity.x = velocity.x/2
 		$crouchy.disabled = false
 		$CollisionShape2D.disabled = true
-		$Sprite.scale.y = 0.5
-		$Sprite.offset.y = 55
+		animation = "crouch"
 		
 	else:
 		$crouchy.disabled = true
 		$CollisionShape2D.disabled = false
-		$Sprite.offset.y = 0
-		$Sprite.scale.y = 1
-	
 		
-func _input(event):
-	if event is InputEventKey and event.is_pressed():
-		if last_keycode == event.keycode and doubletap_time >= 0: 
-			print("DOUBLETAP: ", event.keycode)
-			last_keycode = 0
-		else:
-			last_keycode = event.keycode
-		doubletap_time = DOUBLETAP_DELAY
+	if Input.is_action_pressed("shoot"):
+		animation = "shoot"
+	
+	if $AnimatedSprite.animation != animation:
+		$AnimatedSprite.play(animation)
+
 	
 	
 func _physics_process(delta):
@@ -66,8 +72,6 @@ func _physics_process(delta):
 	get_input()
 	velocity = move_and_slide(velocity, UP)
 
-
-func _process(delta):
-	doubletap_time -= delta
-
-
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
